@@ -1,0 +1,50 @@
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: obd-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-obd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-obd_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-obd_telemetry}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-obd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: obd-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-obd}:${POSTGRES_PASSWORD:-obd_secret}@db:5432/${POSTGRES_DB:-obd_telemetry}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8501,http://frontend:8501}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: obd-frontend
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+    ports:
+      - "${FRONTEND_PORT:-8501}:8501"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

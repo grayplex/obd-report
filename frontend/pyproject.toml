@@ -1,0 +1,20 @@
+[project]
+name = "obd-frontend"
+version = "0.1.0"
+description = "OBD2 Telemetry Dashboard Frontend"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit>=1.30.0",
+    "requests>=2.31.0",
+    "pandas>=2.1.0",
+    "plotly>=5.18.0",
+    "folium>=0.15.0",
+    "streamlit-folium>=0.17.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
