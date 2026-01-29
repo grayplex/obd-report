@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.schemas.trip import TripRead
 from app.services.csv_parser import CSVParser
+from app.services.analytics import TripAnalytics, DrivingBehaviorAnalytics
 
 router = APIRouter()
 
@@ -31,5 +32,12 @@ async def upload_csv(
         name=name,
         description=description,
     )
+
+    # Automatically run analytics
+    trip_analytics = TripAnalytics(db)
+    trip = await trip_analytics.calculate_all(trip.id)
+
+    behavior_analytics = DrivingBehaviorAnalytics(db)
+    await behavior_analytics.detect_events(trip.id)
 
     return trip

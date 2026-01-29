@@ -78,5 +78,29 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
+    def get_trip_summary(self, trip_id: str) -> dict:
+        """Get analytics summary for a trip."""
+        response = requests.get(f"{self.base_url}/analytics/trips/{trip_id}/summary")
+        response.raise_for_status()
+        return response.json()
+
+    def get_trip_events(self, trip_id: str) -> dict:
+        """Get driving events for a trip."""
+        response = requests.get(f"{self.base_url}/analytics/trips/{trip_id}/events")
+        response.raise_for_status()
+        return response.json()
+
+    def analyze_trip(self, trip_id: str) -> dict:
+        """Run analytics on a trip."""
+        response = requests.post(f"{self.base_url}/analytics/trips/{trip_id}/analyze")
+        response.raise_for_status()
+        return response.json()
+
+    def get_advanced_analytics(self, trip_id: str) -> dict:
+        """Get advanced analytics: speed ranges, throttle patterns, cruise stats."""
+        response = requests.get(f"{self.base_url}/analytics/trips/{trip_id}/advanced")
+        response.raise_for_status()
+        return response.json()
+
 
 api_client = APIClient()

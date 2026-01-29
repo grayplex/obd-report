@@ -22,6 +22,29 @@ class Telemetry(Base):
     speed_mph: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Tier 1: Core SAE PIDs
+    engine_rpm: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    mass_air_flow_rate_g_s: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    calculated_load_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    throttle_position_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    accelerator_pedal_position_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    engine_coolant_temp_f: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    intake_air_temp_f: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Tier 2: OBD Fusion Calculated
+    instant_mpg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    trip_mpg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    fuel_rate_gal_hr: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    engine_power_hp: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    acceleration_g: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Tier 3: GPS + Sensors
+    altitude_ft: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    gps_speed_mph: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    gps_bearing_deg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # All other PIDs (Toyota-specific, cruise, wheels, etc.) stored in JSONB
     sensors: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
     trip = relationship("Trip", back_populates="telemetry")
