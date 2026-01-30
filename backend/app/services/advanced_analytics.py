@@ -391,3 +391,66 @@ class AdvancedAnalytics:
             }
 
         return {}
+
+    async def analyze_cold_start(self, trip_id: uuid.UUID) -> Dict:
+        """
+        Analyze cold start fuel efficiency impact.
+        Compares first 5 minutes of driving to warmed-up driving.
+        """
+        telemetry_result = await self.db.execute(
+            select(Telemetry)
+            .where(Telemetry.trip_id == trip_id)
+            .order_by(Telemetry.time)
+        )
+        telemetry_points = telemetry_result.scalars().all()
+
+        if not telemetry_points:
+            return {}
+
+        start_time = telemetry_points[0].time
+        warmup_seconds = 300  # 5 minutes
+
+        cold_mpg_values = []
+        warm_mpg_values = []
+        cold_fuel_rates = []
+        warm_fuel_rates = []
+        cold_coolant_temps = []
+
+        for point in telemetry_points:
+            elapsed = (point.time - start_time).total_seconds()
+            is_cold = elapsed < warmup_seconds
+
+            if point.instant_mpg and 0 < point.instant_mpg < 200 and point.speed_mph and point.speed_mph > 5:
+                if is_cold:
+                    cold_mpg_values.append(point.instant_mpg)
+                else:
+                    warm_mpg_values.append(point.instant_mpg)
+
+            if point.fuel_rate_gal_hr and point.fuel_rate_gal_hr > 0:
+                if is_cold:
+                    cold_fuel_rates.append(point.fuel_rate_gal_hr)
+                else:
+                    warm_fuel_rates.append(point.fuel_rate_gal_hr)
+
+            if point.engine_coolant_temp_f and is_cold:
+                cold_coolant_temps.append(point.engine_coolant_temp_f)
+
+        cold_avg_mpg = sum(cold_mpg_values) / len(cold_mpg_values) if cold_mpg_values else 0
+        warm_avg_mpg = sum(warm_mpg_values) / len(warm_mpg_values) if warm_mpg_values else 0
+        cold_avg_fuel_rate = sum(cold_fuel_rates) / len(cold_fuel_rates) if cold_fuel_rates else 0
+        warm_avg_fuel_rate = sum(warm_fuel_rates) / len(warm_fuel_rates) if warm_fuel_rates else 0
+
+        mpg_penalty = 0
+        if warm_avg_mpg > 0 and cold_avg_mpg > 0:
+            mpg_penalty = ((warm_avg_mpg - cold_avg_mpg) / warm_avg_mpg) * 100
+
+        return {
+            "cold_avg_mpg": cold_avg_mpg,
+            "warm_avg_mpg": warm_avg_mpg,
+            "mpg_penalty_pct": mpg_penalty,
+            "cold_avg_fuel_rate": cold_avg_fuel_rate,
+            "warm_avg_fuel_rate": warm_avg_fuel_rate,
+            "cold_start_temp_f": cold_coolant_temps[0] if cold_coolant_temps else None,
+            "cold_samples": len(cold_mpg_values),
+            "warm_samples": len(warm_mpg_values),
+        }

@@ -170,6 +170,7 @@ async def get_advanced_analytics(trip_id: UUID, db: AsyncSession = Depends(get_d
     cruise_stats = await analytics.analyze_cruise_control(trip_id)
     fuel_insights = await analytics.analyze_fuel_efficiency_insights(trip_id)
     correlation = await analytics.get_speed_throttle_correlation(trip_id)
+    cold_start = await analytics.analyze_cold_start(trip_id)
 
     return {
         "trip_id": str(trip_id),
@@ -178,4 +179,5 @@ async def get_advanced_analytics(trip_id: UUID, db: AsyncSession = Depends(get_d
         "cruise_control": cruise_stats,
         "fuel_insights": fuel_insights,
         "correlation": correlation,
+        "cold_start": cold_start,
     }
